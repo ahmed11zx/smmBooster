@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Shop</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); }
+        .card { background-color: var(--tg-theme-secondary-bg-color); border-radius: 12px; }
+        .btn-primary { background-color: var(--tg-theme-button-color); color: var(--tg-theme-button-text-color); }
+    </style>
+</head>
+<body class="p-4 font-sans">
+
+    <!-- Profile Header -->
+    <div class="flex items-center justify-between mb-6 p-4 card shadow-sm">
+        <div class="flex items-center gap-3">
+            <img id="user-photo" class="w-12 h-12 rounded-full border-2 border-blue-500" src="" alt="">
+            <div>
+                <h1 id="user-name" class="font-bold text-lg">Loading...</h1>
+                <p class="text-xs opacity-70">Welcome back!</p>
+            </div>
+        </div>
+        <div class="text-right">
+            <p class="text-xs">Balance</p>
+            <p id="balance" class="font-bold text-green-500">৳0.00</p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="flex gap-2 mb-6 overflow-x-auto no-scrollbar">
+        <button class="px-4 py-2 rounded-full btn-primary text-sm">All</button>
+        <button class="px-4 py-2 rounded-full card text-sm">Emails</button>
+        <button class="px-4 py-2 rounded-full card text-sm">VPN</button>
+    </div>
+
+    <!-- Product Grid -->
+    <h2 class="text-xl font-bold mb-4">Available Services</h2>
+    <div id="product-list" class="grid grid-cols-2 gap-4">
+        <!-- Products will load here -->
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        const user = tg.initDataUnsafe.user;
+        const userId = user?.id || 123; // Fallback for browser testing
+
+        // Initial Load
+        document.getElementById('user-name').innerText = user?.first_name || "Guest";
+        document.getElementById('user-photo').src = user?.photo_url || "https://ui-avatars.com/api/?name=" + user?.first_name;
+
+        async function loadApp() {
+            // Load User Details
+            const userRes = await fetch('http://localhost:3000/api/user', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: userId, name: user?.first_name})
+            });
+            const userData = await userRes.json();
+            document.getElementById('balance').innerText = `৳${userData.balance}`;
+
+            // Load Products
+            const prodRes = await fetch('http://localhost:3000/api/products');
+            const products = await prodRes.json();
+            
+            const list = document.getElementById('product-list');
+            list.innerHTML = '';
+            products.forEach(p => {
+                const isOut = p.stock <= 0;
+                list.innerHTML += `
+                    <div class="p-4 card flex flex-col items-center text-center shadow-sm">
+                        <span class="text-3xl mb-2">${p.icon}</span>
+                        <h3 class="font-bold">${p.name}</h3>
+                        <p class="text-sm text-blue-500 font-semibold">৳${p.price}</p>
+                        <p class="text-[10px] mb-3 ${isOut ? 'text-red-500' : 'opacity-60'}">
+                            Stock: ${isOut ? 'Out of Stock' : p.stock + ' pcs'}
+                        </p>
+                        <button onclick="buyProduct(${p.id})" ${isOut ? 'disabled' : ''} 
+                            class="w-full py-2 rounded-lg btn-primary text-xs font-bold ${isOut ? 'opacity-50' : ''}">
+                            ${isOut ? 'Sold Out' : 'Buy Now'}
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        async function buyProduct(productId) {
+            tg.MainButton.setText("Processing...").show();
+            const res = await fetch('http://localhost:3000/api/buy', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({userId, productId})
+            });
+            const data = await res.json();
+            
+            if(data.success) {
+                tg.showAlert("Purchase Successful!");
+                loadApp();
+            } else {
+                tg.showAlert("Error: " + data.error);
+            }
+            tg.MainButton.hide();
+        }
+
+        loadApp();
+    </script>
+</body>
+</html>
