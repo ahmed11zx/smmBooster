@@ -3,110 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Service Shop</title>
+    <title>Premium Service Panel</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background-color: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); }
-        .card { background-color: var(--tg-theme-secondary-bg-color); border-radius: 12px; }
-        .btn-primary { background-color: var(--tg-theme-button-color); color: var(--tg-theme-button-text-color); }
+        :root { --tg-theme-bg: var(--tg-theme-bg-color, #ffffff); }
+        body { background-color: var(--tg-theme-bg); color: var(--tg-theme-text-color); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .bkash-bg { background-color: #e2136e; } /* bKash Pink */
+        .nagad-bg { background-color: #ed1c24; } /* Nagad Red */
+        .card { background-color: var(--tg-theme-secondary-bg-color); border-radius: 15px; }
+        .hidden { display: none; }
+        .active-tab { border-bottom: 3px solid #e2136e; color: #e2136e; font-weight: bold; }
     </style>
 </head>
-<body class="p-4 font-sans">
+<body class="pb-20">
 
-    <!-- Profile Header -->
-    <div class="flex items-center justify-between mb-6 p-4 card shadow-sm">
+    <!-- Top Profile Header -->
+    <div class="p-4 flex items-center justify-between sticky top-0 bg-white shadow-sm z-10">
         <div class="flex items-center gap-3">
-            <img id="user-photo" class="w-12 h-12 rounded-full border-2 border-blue-500" src="" alt="">
+            <img id="u-photo" class="w-10 h-10 rounded-full border border-pink-500" src="https://via.placeholder.com/100">
             <div>
-                <h1 id="user-name" class="font-bold text-lg">Loading...</h1>
-                <p class="text-xs opacity-70">Welcome back!</p>
+                <p id="u-name" class="text-sm font-bold">User Name</p>
+                <p class="text-[10px] text-gray-500">Premium Member</p>
             </div>
         </div>
         <div class="text-right">
-            <p class="text-xs">Balance</p>
-            <p id="balance" class="font-bold text-green-500">৳0.00</p>
+            <p class="text-[10px] uppercase text-gray-400">Balance</p>
+            <p id="u-balance" class="font-bold text-pink-600">৳0.00</p>
         </div>
     </div>
 
-    <!-- Navigation -->
-    <div class="flex gap-2 mb-6 overflow-x-auto no-scrollbar">
-        <button class="px-4 py-2 rounded-full btn-primary text-sm">All</button>
-        <button class="px-4 py-2 rounded-full card text-sm">Emails</button>
-        <button class="px-4 py-2 rounded-full card text-sm">VPN</button>
+    <!-- Main Content Area -->
+    <div id="page-home" class="p-4">
+        <h2 class="font-bold mb-4">Our Services</h2>
+        <div id="product-list" class="grid grid-cols-2 gap-4"></div>
     </div>
 
-    <!-- Product Grid -->
-    <h2 class="text-xl font-bold mb-4">Available Services</h2>
-    <div id="product-list" class="grid grid-cols-2 gap-4">
-        <!-- Products will load here -->
+    <!-- Wallet Page -->
+    <div id="page-wallet" class="p-4 hidden text-center">
+        <div class="card p-8 mb-4 shadow-inner">
+            <p class="text-gray-500">Available Balance</p>
+            <h1 id="w-balance" class="text-4xl font-black text-pink-600">৳0</h1>
+        </div>
+        <div class="p-4">
+            <label class="block text-left text-sm mb-1 ml-1">Deposit Amount (BDT)</label>
+            <input id="deposit-amt" type="number" placeholder="Enter amount (Min 10)" class="w-full p-3 rounded-xl border mb-4 outline-none focus:ring-2 focus:ring-pink-500 text-black">
+            <button onclick="openGateway()" class="w-full py-4 bkash-bg text-white rounded-xl font-bold shadow-lg">
+                <i class="fa-solid fa-wallet mr-2"></i> Add Money
+            </button>
+        </div>
+    </div>
+
+    <!-- Payment Gateway Page (Designed as per Image) -->
+    <div id="page-gateway" class="fixed inset-0 bg-white z-50 hidden overflow-y-auto">
+        <div id="gateway-header" class="p-4 flex items-center justify-between border-b bkash-bg text-white">
+            <button onclick="showPage('wallet')"><i class="fa-solid fa-chevron-left text-xl"></i></button>
+            <img id="gateway-logo" src="https://www.logo.wine/a/logo/BKash/BKash-bKash-Logo.wine.svg" class="h-8 brightness-200">
+            <div></div>
+        </div>
+
+        <div class="p-5">
+            <!-- Method Selector -->
+            <div class="flex justify-center gap-4 mb-6">
+                <button onclick="setGateway('bkash')" id="btn-sel-bkash" class="px-6 py-2 rounded-full border-2 border-pink-600 bg-pink-50 text-pink-600 font-bold">● bKash</button>
+                <button onclick="setGateway('nagad')" id="btn-sel-nagad" class="px-6 py-2 rounded-full border-2 border-gray-200 text-gray-500 font-bold">○ Nagad</button>
+            </div>
+
+            <!-- Amount Card -->
+            <div class="card p-4 flex items-center gap-4 border shadow-sm mb-6">
+                <div class="w-12 h-12 bg-teal-600 rounded-full flex items-center justify-center text-white text-xl">
+                    <i class="fa-solid fa-money-bill-transfer"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] text-gray-400 uppercase">Payment Amount</p>
+                    <p id="pay-amount-display" class="text-2xl font-bold text-gray-800">৳0</p>
+                </div>
+            </div>
+
+            <div id="dynamic-theme" class="bkash-bg p-6 rounded-t-[40px] -mx-5 min-h-[500px] text-white">
+                <p class="text-center font-bold text-lg mb-4">ট্রানজেকশন আইডি দিন</p>
+                <input id="trx-id" type="text" placeholder="ট্রানজেকশন আইডি" class="w-full p-4 rounded-xl text-black text-center mb-6 shadow-inner uppercase font-bold">
+                
+                <div class="bg-white/10 p-4 rounded-2xl text-sm leading-relaxed mb-6">
+                    <ul class="space-y-3">
+                        <li>• *247# ডায়াল করে আপনার <span class="method-name">bKash</span> মোবাইল মেনুতে যান অথবা অ্যাপে যান।</li>
+                        <li>• "Send Money" -এ ক্লিক করুন।</li>
+                        <li>• প্রাপক নম্বর হিসেবে এই নম্বরটি লিখুন:</li>
+                        <div class="bg-black/20 p-3 rounded-lg flex justify-between items-center mt-2">
+                            <span id="target-number" class="text-xl font-mono text-yellow-300">01804749569</span>
+                            <button onclick="copyNumber()"><i class="fa-regular fa-copy"></i></button>
+                        </div>
+                        <li>• টাকার পরিমাণ: <span class="pay-amount-val text-yellow-300 font-bold">0</span></li>
+                    </ul>
+                </div>
+
+                <button onclick="verifyPayment()" class="w-full py-4 bg-white text-pink-600 rounded-full font-black text-lg shadow-xl uppercase tracking-widest">
+                    VERIFY
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-2 shadow-2xl">
+        <button onclick="showPage('home')" id="nav-home" class="p-2 text-center flex-1 active-tab">
+            <i class="fa-solid fa-house text-lg"></i>
+            <p class="text-[10px]">Home</p>
+        </button>
+        <button onclick="showPage('wallet')" id="nav-wallet" class="p-2 text-center flex-1">
+            <i class="fa-solid fa-wallet text-lg"></i>
+            <p class="text-[10px]">Wallet</p>
+        </button>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        const userId = tg.initDataUnsafe.user?.id || 123;
+        let currentMethod = 'bkash';
 
-        const user = tg.initDataUnsafe.user;
-        const userId = user?.id || 123; // Fallback for browser testing
-
-        // Initial Load
-        document.getElementById('user-name').innerText = user?.first_name || "Guest";
-        document.getElementById('user-photo').src = user?.photo_url || "https://ui-avatars.com/api/?name=" + user?.first_name;
-
-        async function loadApp() {
-            // Load User Details
-            const userRes = await fetch('http://localhost:3000/api/user', {
+        // Initialize App
+        async function init() {
+            const res = await fetch(`http://localhost:3000/api/user`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({id: userId, name: user?.first_name})
+                body: JSON.stringify({id: userId, name: tg.initDataUnsafe.user?.first_name || "Guest"})
             });
-            const userData = await userRes.json();
-            document.getElementById('balance').innerText = `৳${userData.balance}`;
-
-            // Load Products
-            const prodRes = await fetch('http://localhost:3000/api/products');
-            const products = await prodRes.json();
-            
-            const list = document.getElementById('product-list');
-            list.innerHTML = '';
-            products.forEach(p => {
-                const isOut = p.stock <= 0;
-                list.innerHTML += `
-                    <div class="p-4 card flex flex-col items-center text-center shadow-sm">
-                        <span class="text-3xl mb-2">${p.icon}</span>
-                        <h3 class="font-bold">${p.name}</h3>
-                        <p class="text-sm text-blue-500 font-semibold">৳${p.price}</p>
-                        <p class="text-[10px] mb-3 ${isOut ? 'text-red-500' : 'opacity-60'}">
-                            Stock: ${isOut ? 'Out of Stock' : p.stock + ' pcs'}
-                        </p>
-                        <button onclick="buyProduct(${p.id})" ${isOut ? 'disabled' : ''} 
-                            class="w-full py-2 rounded-lg btn-primary text-xs font-bold ${isOut ? 'opacity-50' : ''}">
-                            ${isOut ? 'Sold Out' : 'Buy Now'}
-                        </button>
-                    </div>
-                `;
-            });
+            const user = await res.json();
+            updateUI(user);
+            loadProducts();
         }
 
-        async function buyProduct(productId) {
-            tg.MainButton.setText("Processing...").show();
-            const res = await fetch('http://localhost:3000/api/buy', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({userId, productId})
-            });
+        function updateUI(user) {
+            document.getElementById('u-balance').innerText = `৳${user.balance}`;
+            document.getElementById('w-balance').innerText = `৳${user.balance}`;
+            document.getElementById('u-name').innerText = user.name;
+            if(tg.initDataUnsafe.user?.photo_url) document.getElementById('u-photo').src = tg.initDataUnsafe.user.photo_url;
+        }
+
+        async function loadProducts() {
+            const res = await fetch('http://localhost:3000/api/products');
             const data = await res.json();
-            
-            if(data.success) {
-                tg.showAlert("Purchase Successful!");
-                loadApp();
-            } else {
-                tg.showAlert("Error: " + data.error);
-            }
-            tg.MainButton.hide();
+            const container = document.getElementById('product-list');
+            container.innerHTML = data.map(p => `
+                <div class="p-4 card text-center shadow-sm">
+                    <span class="text-3xl">${p.icon}</span>
+                    <h3 class="font-bold text-sm mt-2">${p.name}</h3>
+                    <p class="text-pink-600 font-bold">৳${p.price}</p>
+                    <p class="text-[9px] ${p.stock <=0 ? 'text-red-500' : 'text-gray-400'}">Stock: ${p.stock > 0 ? p.stock+' pcs' : 'Out of Stock'}</p>
+                    <button class="mt-3 w-full py-1 text-[10px] bkash-bg text-white rounded-lg ${p.stock <=0 ? 'opacity-50' : ''}" ${p.stock <=0 ? 'disabled' : ''}>BUY NOW</button>
+                </div>
+            `).join('');
         }
 
-        loadApp();
+        function showPage(page) {
+            ['home', 'wallet', 'gateway'].forEach(p => document.getElementById('page-'+p).classList.add('hidden'));
+            document.getElementById('page-'+page).classList.remove('hidden');
+            
+            // Bottom Nav Color
+            document.getElementById('nav-home').classList.remove('active-tab');
+            document.getElementById('nav-wallet').classList.remove('active-tab');
+            if(page !== 'gateway') document.getElementById('nav-'+page).classList.add('active-tab');
+        }
+
+        function openGateway() {
+            const amt = document.getElementById('deposit-amt').value;
+            if(amt < 10) return tg.showAlert("Minimum deposit 10 BDT");
+            
+            document.getElementById('pay-amount-display').innerText = `৳${amt}`;
+            document.querySelectorAll('.pay-amount-val').forEach(el => el.innerText = amt);
+            showPage('gateway');
+        }
+
+        function setGateway(method) {
+            currentMethod = method;
+            const themeDiv = document.getElementById('dynamic-theme');
+            const header = document.getElementById('gateway-header');
+            const logo = document.getElementById('gateway-logo');
+            const targetNum = document.getElementById('target-number');
+            const bKashBtn = document.getElementById('btn-sel-bkash');
+            const nagadBtn = document.getElementById('btn-sel-nagad');
+
+            if(method === 'bkash') {
+                themeDiv.className = "bkash-bg p-6 rounded-t-[40px] -mx-5 min-h-[500px] text-white";
+                header.className = "p-4 flex items-center justify-between border-b bkash-bg text-white";
+                logo.src = "https://www.logo.wine/a/logo/BKash/BKash-bKash-Logo.wine.svg";
+                targetNum.innerText = "01804749569";
+                bKashBtn.className = "px-6 py-2 rounded-full border-2 border-pink-600 bg-pink-50 text-pink-600 font-bold";
+                nagadBtn.className = "px-6 py-2 rounded-full border-2 border-gray-200 text-gray-500 font-bold";
+            } else {
+                themeDiv.className = "nagad-bg p-6 rounded-t-[40px] -mx-5 min-h-[500px] text-white";
+                header.className = "p-4 flex items-center justify-between border-b nagad-bg text-white";
+                logo.src = "https://freelogopng.com/images/all_img/1679248787nagad-logo-png.png";
+                targetNum.innerText = "01886313023";
+                nagadBtn.className = "px-6 py-2 rounded-full border-2 border-red-600 bg-red-50 text-red-600 font-bold";
+                bKashBtn.className = "px-6 py-2 rounded-full border-2 border-gray-200 text-gray-500 font-bold";
+            }
+            document.querySelectorAll('.method-name').forEach(el => el.innerText = method);
+        }
+
+        async function verifyPayment() {
+            const trx = document.getElementById('trx-id').value;
+            const amt = document.getElementById('deposit-amt').value;
+            if(trx.length < 8) return tg.showAlert("Invalid Transaction ID");
+
+            tg.showConfirm("Verify this payment?", async (ok) => {
+                if(ok) {
+                    const res = await fetch('http://localhost:3000/api/deposit', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({userId, amount: amt})
+                    });
+                    const data = await res.json();
+                    tg.showAlert("Deposit Successful!");
+                    updateUI(data);
+                    showPage('wallet');
+                }
+            });
+        }
+
+        function copyNumber() {
+            const num = document.getElementById('target-number').innerText;
+            navigator.clipboard.writeText(num);
+            tg.showScanQrPopup({text: "Number Copied!"}); 
+            setTimeout(() => tg.closeScanQrPopup(), 1000);
+        }
+
+        init();
     </script>
 </body>
 </html>
