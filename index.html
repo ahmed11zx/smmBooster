@@ -3,283 +3,419 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Service Shop & Wallet</title>
+    <title>Service Pro - Digital Shop</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: var(--tg-theme-bg-color, #f4f4f9); color: var(--tg-theme-text-color, #222); transition: all 0.3s; }
-        .card { background-color: var(--tg-theme-secondary-bg-color, #ffffff); border-radius: 16px; }
-        .btn-primary { background-color: var(--tg-theme-button-color, #248bcf); color: var(--tg-theme-button-text-color, #ffffff); }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         
-        /* Payment Styles */
-        .bkash-theme { --pay-color: #E2136E; --pay-bg: #fdf0f6; }
-        .nagad-theme { --pay-color: #ED1C24; --pay-bg: #fef0f0; }
-        .payment-container { border-radius: 30px 30px 0 0; }
+        :root {
+            --primary: #2563eb;
+            --bkash: #e2136e;
+            --nagad: #ed1c24;
+            --bg: #f8fafc;
+        }
+
+        body { 
+            background-color: var(--bg); 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0; padding: 0;
+        }
+
+        .page { padding: 16px; padding-bottom: 110px; }
+        .hidden { display: none; }
+
+        /* Navigation */
+        .bottom-nav { 
+            background: white; border-top: 1px solid #f1f5f9; 
+            position: fixed; bottom: 0; left: 0; right: 0; 
+            display: flex; justify-content: space-around; 
+            padding: 12px 0; z-index: 100;
+        }
+        .nav-item { border:none; background:none; display: flex; flex-direction: column; align-items: center; font-size: 11px; color: #94a3b8; font-weight: 700; transition: 0.3s; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item i { font-size: 22px; margin-bottom: 4px; }
+
+        /* Wallet Card Design */
+        .wallet-card {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-radius: 30px; padding: 30px; position: relative; overflow: hidden; color: white;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .wallet-card::before {
+            content: ''; position: absolute; top: -50px; right: -50px; width: 150px; height: 150px;
+            background: rgba(255,255,255,0.05); border-radius: 50%;
+        }
+
+        /* VPN Card */
+        .vpn-card {
+            background: white; border-radius: 20px; overflow: hidden; border: 1px solid #f1f5f9;
+            transition: 0.3s;
+        }
+        .vpn-card:active { transform: scale(0.97); }
+
+        /* Payment Gateway */
+        #view-gateway { position: fixed; inset: 0; background: white; z-index: 2000; overflow-y: auto; }
+        .gateway-footer { border-radius: 40px 40px 0 0; padding: 30px 20px; min-height: 70vh; }
+        
+        .method-toggle { display: inline-flex; background: #f1f5f9; padding: 4px; border-radius: 50px; }
+        .toggle-btn { padding: 8px 24px; border-radius: 50px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 14px; }
+        .toggle-btn.active { background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+
+        .similar-scroll::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="p-0 font-sans">
+<body>
 
-    <!-- Main Store Page -->
-    <div id="page-store" class="p-4">
-        <!-- Profile Header -->
-        <div class="flex items-center justify-between mb-6 p-4 card shadow-sm border border-gray-100">
-            <div class="flex items-center gap-3">
-                <img id="user-photo" class="w-12 h-12 rounded-full border-2 border-blue-500" src="https://ui-avatars.com/api/?name=User" alt="">
-                <div>
-                    <h1 id="user-name" class="font-bold text-lg leading-tight">Loading...</h1>
-                    <p class="text-xs opacity-70">Welcome back!</p>
-                </div>
-            </div>
-            <div class="text-right">
-                <p class="text-xs opacity-60">Balance</p>
-                <p id="balance-display" class="font-bold text-green-600 text-lg">৳0.00</p>
-            </div>
-        </div>
-
-        <!-- Navigation -->
-        <div class="flex gap-2 mb-6 overflow-x-auto no-scrollbar">
-            <button onclick="filterShop('all')" class="px-5 py-2 rounded-full btn-primary text-sm font-medium">All</button>
-            <button onclick="showWallet()" class="px-5 py-2 rounded-full card text-sm font-medium border border-gray-200 shadow-sm">
-                <i class="fas fa-wallet mr-1"></i> Wallet
-            </button>
-            <button class="px-5 py-2 rounded-full card text-sm font-medium border border-gray-200 shadow-sm">VPN</button>
-            <button class="px-5 py-2 rounded-full card text-sm font-medium border border-gray-200 shadow-sm">Emails</button>
-        </div>
-
-        <!-- Product Grid -->
-        <h2 class="text-xl font-bold mb-4 px-1">Available Services</h2>
-        <div id="product-list" class="grid grid-cols-2 gap-4 pb-10">
-            <!-- Products via JS -->
-        </div>
-    </div>
-
-    <!-- Wallet Page -->
-    <div id="page-wallet" class="hidden p-4">
-        <div class="flex items-center gap-3 mb-6">
-            <button onclick="showStore()" class="p-2"><i class="fas fa-arrow-left"></i></button>
-            <h1 class="text-xl font-bold">My Wallet</h1>
-        </div>
-
-        <div class="card p-8 text-center shadow-md border border-gray-100 mb-6">
-            <p class="text-gray-500 mb-1">Current Balance</p>
-            <h2 id="wallet-balance" class="text-4xl font-black text-blue-600">৳0.00</h2>
-        </div>
-
-        <div class="space-y-4">
-            <p class="font-bold text-gray-600 px-1">Add Money to Wallet</p>
-            <div class="grid grid-cols-2 gap-4">
-                <button onclick="openPayment('bkash')" class="p-4 card border border-pink-100 flex flex-col items-center gap-2 hover:bg-pink-50 transition">
-                    <img src="https://searchvectorlogo.com/wp-content/uploads/2020/02/bkash-logo-vector.png" class="h-8 object-contain">
-                    <span class="text-xs font-bold text-pink-600">bKash Deposit</span>
-                </button>
-                <button onclick="openPayment('nagad')" class="p-4 card border border-red-100 flex flex-col items-center gap-2 hover:bg-red-50 transition">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Nagad_Logo.svg/1200px-Nagad_Logo.svg.png" class="h-8 object-contain">
-                    <span class="text-xs font-bold text-red-600">Nagad Deposit</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Payment Gateway Page (Designed as per your images) -->
-    <div id="page-payment" class="hidden min-h-screen bg-white">
-        <!-- Sticky Header -->
-        <div class="p-4 flex items-center justify-between">
-            <button onclick="showWallet()" class="text-gray-600 text-xl"><i class="fas fa-chevron-left"></i></button>
-            <img id="pay-logo" src="" class="h-8">
-            <div class="w-6"></div>
-        </div>
-
-        <!-- Method Switcher -->
-        <div class="flex justify-center gap-4 mb-6">
-            <button id="tab-bkash" onclick="switchMethod('bkash')" class="flex items-center gap-2 px-6 py-2 rounded-full border-2 font-bold transition">
-                <span class="w-3 h-3 rounded-full border-2 border-gray-400" id="dot-bkash"></span> bKash
-            </button>
-            <button id="tab-nagad" onclick="switchMethod('nagad')" class="flex items-center gap-2 px-6 py-2 rounded-full border-2 font-bold transition">
-                <span class="w-3 h-3 rounded-full border-2 border-gray-400" id="dot-nagad"></span> Nagad
-            </button>
-        </div>
-
-        <!-- Amount Card -->
-        <div class="mx-6 p-6 card border-2 border-gray-50 flex items-center justify-center gap-4 mb-8">
-            <div class="w-12 h-12 bg-teal-600 rounded-full flex items-center justify-center text-white text-xl">
-                <i class="fas fa-coins"></i>
-            </div>
+    <!-- App Header -->
+    <header id="main-header" class="p-4 flex justify-between items-center bg-white border-b">
+        <div class="flex items-center gap-3">
+            <img id="profile-pic" src="https://ui-avatars.com/api/?name=User" class="w-10 h-10 rounded-full border-2 border-blue-500">
             <div>
-                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Payment Amount</p>
-                <p class="text-2xl font-bold">৳<span id="pay-amount-val">40</span></p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase leading-none">Welcome back,</p>
+                <h1 id="user-display-name" class="font-bold text-slate-800">User</h1>
             </div>
         </div>
+        <div class="bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100">
+            <p id="balance-top" class="text-sm font-black text-blue-600">৳0.00</p>
+        </div>
+    </header>
 
-        <!-- Main Form Area -->
-        <div id="payment-body" class="payment-container min-h-[500px] p-6 text-white transition-colors duration-300">
-            <p class="text-center font-bold text-lg mb-4">ট্রানজেকশন আইডি দিন</p>
-            
-            <input type="text" placeholder="ট্রানজেকশন আইডি" class="w-full p-4 rounded-xl text-black text-center mb-6 focus:outline-none shadow-inner">
-
-            <!-- Instruction Box -->
-            <div id="instruction-box" class="rounded-2xl p-6 text-sm space-y-4 mb-8">
-                <div class="flex gap-3">
-                    <div class="mt-1">•</div>
-                    <p>*247# ডায়াল করে আপনার <span class="method-name">bKash</span> মোবাইল মেনুতে যান অথবা অ্যাপে যান।</p>
-                </div>
-                <div class="flex gap-3">
-                    <div class="mt-1">•</div>
-                    <p>"Send Money" -এ ক্লিক করুন।</p>
-                </div>
-                <div class="flex gap-3">
-                    <div class="mt-1">•</div>
-                    <p>প্রাপক নম্বর হিসেবে এই নম্বরটি লিখুনঃ</p>
-                </div>
-                
-                <!-- Number Box -->
-                <div class="bg-black/20 p-4 rounded-xl flex justify-between items-center">
-                    <span id="target-number" class="text-xl font-bold tracking-wider text-yellow-300">01804749569</span>
-                    <button onclick="copyNumber()" class="p-2 bg-white/20 rounded-lg"><i class="far fa-copy"></i></button>
-                </div>
-
-                <div class="flex gap-3">
-                    <div class="mt-1">•</div>
-                    <p>টাকার পরিমাণঃ <span class="font-bold text-yellow-300">40</span></p>
-                </div>
+    <main>
+        <!-- Home View -->
+        <div id="view-home" class="page">
+            <div class="mb-6 rounded-3xl overflow-hidden shadow-lg">
+                <img src="https://img.freepik.com/free-vector/special-offer-modern-banner-design_1017-15072.jpg" class="w-full">
             </div>
+            <h2 class="text-lg font-black mb-4">Featured Services</h2>
+            <div id="product-grid" class="grid grid-cols-2 gap-4"></div>
+        </div>
 
-            <button onclick="verifyPayment()" class="w-full bg-white text-black py-4 rounded-full font-black text-lg shadow-lg active:scale-95 transition">
-                VERIFY
+        <!-- VPN Page -->
+        <div id="view-vpn" class="page hidden">
+            <h2 class="text-xl font-black mb-4">All VPN Services</h2>
+            <div id="vpn-grid" class="grid grid-cols-1 gap-4"></div>
+        </div>
+
+        <!-- VPN Detail View (Full Page) -->
+        <div id="view-vpn-details" class="page hidden bg-white fixed inset-0 z-[150] overflow-y-auto pb-10">
+            <button onclick="navigate('vpn')" class="absolute top-6 left-6 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center z-10">
+                <i class="fas fa-chevron-left"></i>
             </button>
+            <div id="vpn-details-content"></div>
+            
+            <div class="px-4 mt-8">
+                <h3 class="font-bold text-slate-800 mb-4">Similar Products</h3>
+                <div id="similar-products" class="flex gap-4 overflow-x-auto similar-scroll pb-4"></div>
+            </div>
         </div>
-    </div>
+
+        <!-- Email View -->
+        <div id="view-email" class="page hidden">
+            <div class="bg-white rounded-3xl p-6 shadow-sm border">
+                <h2 class="text-xl font-black mb-6">Buy Accounts</h2>
+                <div class="space-y-4">
+                    <label class="text-xs font-bold text-slate-400 uppercase ml-1">Choose Platform</label>
+                    <select id="email-select" onchange="syncEmail()" class="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold outline-none ring-1 ring-slate-100">
+                        <option value="gmail">Gmail Premium</option>
+                        <option value="hotmail">Hotmail Fresh</option>
+                        <option value="outlook">Outlook Business</option>
+                        <option value="edu">Edu Mail (Lifetime)</option>
+                        <option value="proton">Proton Mail</option>
+                    </select>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-blue-50 p-4 rounded-2xl text-center">
+                            <p class="text-[10px] font-bold text-blue-400">PRICE</p>
+                            <p class="text-lg font-black text-blue-700">৳<span id="em-price">25</span></p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-2xl text-center">
+                            <p class="text-[10px] font-bold text-slate-400">STOCK</p>
+                            <p class="text-lg font-black text-slate-700"><span id="em-stock">99</span></p>
+                        </div>
+                    </div>
+                    <input type="number" id="em-qty" value="1" min="1" oninput="calcTotal()" class="w-full p-4 bg-slate-100 rounded-2xl font-black text-center text-xl" placeholder="Quantity">
+                    <button onclick="handlePurchase('email')" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold shadow-xl">BUY NOW (৳<span id="em-total">25</span>)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wallet View -->
+        <div id="view-wallet" class="page hidden">
+            <div class="wallet-card mb-8">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-bold opacity-60 uppercase tracking-widest">Available Balance</p>
+                        <h2 class="text-4xl font-black mt-2">৳<span id="wallet-balance-val">0.00</span></h2>
+                    </div>
+                    <div class="bg-white/10 p-3 rounded-2xl">
+                        <i class="fas fa-wallet text-2xl"></i>
+                    </div>
+                </div>
+                <div class="mt-8 flex items-center gap-2">
+                    <div class="h-1.5 flex-1 bg-white/10 rounded-full overflow-hidden">
+                        <div class="h-full bg-blue-400 w-1/2"></div>
+                    </div>
+                    <p class="text-[10px] font-bold opacity-60">Verified Account</p>
+                </div>
+            </div>
+
+            <h3 class="font-extrabold text-slate-800 mb-4">Fast Deposit</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="openGateway('bkash')" class="bg-white p-5 rounded-3xl border flex flex-col items-center gap-3">
+                    <img src="bkash.jpg" class="h-10 w-10 rounded-full object-cover border" onerror="this.src='https://searchvectorlogo.com/wp-content/uploads/2020/02/bkash-logo-vector.png'">
+                    <span class="font-bold text-sm">bKash</span>
+                </button>
+                <button onclick="openGateway('nagad')" class="bg-white p-5 rounded-3xl border flex flex-col items-center gap-3">
+                    <img src="nagad.jpg" class="h-10 w-10 rounded-full object-cover border" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Nagad_Logo.svg/1200px-Nagad_Logo.svg.png'">
+                    <span class="font-bold text-sm">Nagad</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Admin View -->
+        <div id="view-admin" class="page hidden">
+            <h2 class="text-xl font-black text-red-600 mb-4">Admin Inventory</h2>
+            <div id="admin-inventory" class="space-y-2"></div>
+        </div>
+
+        <!-- Payment Gateway -->
+        <div id="view-gateway" class="hidden">
+            <div class="p-6 text-center">
+                <button onclick="closeGateway()" class="absolute left-6 top-8 text-slate-400"><i class="fas fa-arrow-left text-xl"></i></button>
+                <img id="gateway-logo" src="" class="h-10 mx-auto mt-2">
+                
+                <div class="method-toggle mt-8">
+                    <div id="t-bkash" onclick="switchMethod('bkash')" class="toggle-btn active">Bkash</div>
+                    <div id="t-nagad" onclick="switchMethod('nagad')" class="toggle-btn">Nagad</div>
+                </div>
+
+                <div class="mx-4 mt-8 p-6 bg-slate-50 rounded-[35px] border-2 border-dashed border-slate-200 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <img src="apklogo.jpg" class="w-10 h-10 rounded-full shadow-sm" onerror="this.src='https://cdn-icons-png.flaticon.com/512/217/217853.png'">
+                        <div class="text-left">
+                            <p class="text-[10px] font-bold text-slate-400">PAYMENT AMOUNT</p>
+                            <p class="text-2xl font-black">৳40</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="gateway-body" class="gateway-footer text-white">
+                <h3 class="text-center font-bold text-lg mb-6">ট্রানজেকশন আইডি দিন</h3>
+                <input type="text" id="trx-id-input" placeholder="ট্রানজেকশন আইডি" class="w-full p-5 rounded-2xl text-slate-800 text-center font-bold text-xl outline-none shadow-inner">
+
+                <div class="mt-10 space-y-4 px-2">
+                    <div class="flex gap-4"><div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shrink-0">1</div><p id="inst-1" class="text-sm font-medium"></p></div>
+                    <div class="flex gap-4"><div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shrink-0">2</div><p class="text-sm font-medium">"Send Money" -এ ক্লিক করুন।</p></div>
+                    <div class="flex gap-4"><div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center shrink-0">3</div><p class="text-sm font-medium">প্রাপক নম্বর হিসেবে এই নম্বরটি লিখুনঃ</p></div>
+                    
+                    <div class="bg-black/20 p-4 rounded-2xl flex justify-between items-center">
+                        <span id="target-number" class="text-2xl font-black tracking-tighter text-yellow-300">01804749569</span>
+                        <button onclick="copyNumber()" class="bg-white/20 px-4 py-2 rounded-xl text-xs font-bold uppercase">Copy</button>
+                    </div>
+                </div>
+
+                <button onclick="verifyPayment()" class="w-full bg-white text-slate-900 py-5 rounded-[25px] font-black text-xl mt-10 shadow-2xl active:scale-95 transition">VERIFY PAYMENT</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Navigation -->
+    <nav class="bottom-nav" id="main-nav">
+        <button onclick="navigate('home')" class="nav-item active" id="nav-home"><i class="fas fa-home"></i><span>Home</span></button>
+        <button onclick="navigate('email')" class="nav-item" id="nav-email"><i class="fas fa-at"></i><span>Emails</span></button>
+        <button onclick="navigate('vpn')" class="nav-item" id="nav-vpn"><i class="fas fa-shield-halved"></i><span>VPN</span></button>
+        <button onclick="navigate('wallet')" class="nav-item" id="nav-wallet"><i class="fas fa-wallet"></i><span>Wallet</span></button>
+        <button onclick="navigate('admin')" class="nav-item hidden" id="nav-admin"><i class="fas fa-user-gear text-red-500"></i><span>Admin</span></button>
+    </nav>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        let currentBalance = 0;
-        let selectedPayMethod = 'bkash';
+        // --- CONFIGURATION ---
+        const ADMIN_ID = 6703675335;
+        const BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"; // আপনার বোট টোকেন দিন
+        const CHANNEL_ID = "@psisjdn"; // চ্যানেল ইউজারনেম
+        
+        let userBalance = 500.00;
+        let products = [
+            { id: 1, name: "NordVPN 1 Year", price: 250, stock: 12, cat: 'vpn', img: 'https://www.wizcase.com/wp-content/uploads/2022/03/NordVPN-Logo.png', desc: 'Secure encryption, 5000+ servers, and no-logs policy.' },
+            { id: 2, name: "ExpressVPN Premium", price: 350, stock: 5, cat: 'vpn', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/ExpressVPN_logo.svg/1200px-ExpressVPN_logo.svg.png', desc: 'The fastest VPN on the market. High bandwidth for streaming.' },
+            { id: 3, name: "Surfshark VPN", price: 180, stock: 20, cat: 'vpn', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Surfshark_logo.svg/1200px-Surfshark_logo.svg.png', desc: 'Unlimited devices connection. Best value for money.' },
+            { id: 4, name: "CyberGhost VPN", price: 220, stock: 8, cat: 'vpn', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/CyberGhost_VPN_logo.svg/1200px-CyberGhost_VPN_logo.svg.png', desc: 'Optimized servers for Netflix and Torrenting.' }
+        ];
 
-        // --- Navigation Logic ---
-        function showStore() {
-            document.getElementById('page-store').classList.remove('hidden');
-            document.getElementById('page-wallet').classList.add('hidden');
-            document.getElementById('page-payment').classList.add('hidden');
-            tg.BackButton.hide();
-        }
-
-        function showWallet() {
-            document.getElementById('page-store').classList.add('hidden');
-            document.getElementById('page-wallet').classList.remove('hidden');
-            document.getElementById('page-payment').classList.add('hidden');
-            tg.BackButton.show();
-        }
-
-        function openPayment(method) {
-            document.getElementById('page-wallet').classList.add('hidden');
-            document.getElementById('page-payment').classList.remove('hidden');
-            switchMethod(method);
-        }
-
-        tg.BackButton.onClick(() => {
-            if (!document.getElementById('page-payment').classList.contains('hidden')) showWallet();
-            else showStore();
-        });
-
-        // --- Payment Logic ---
-        const config = {
-            bkash: {
-                color: '#E2136E',
-                logo: 'https://searchvectorlogo.com/wp-content/uploads/2020/02/bkash-logo-vector.png',
-                number: '01804749569',
-                name: 'bKash'
-            },
-            nagad: {
-                color: '#ED1C24',
-                logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Nagad_Logo.svg/1200px-Nagad_Logo.svg.png',
-                number: '01886313023',
-                name: 'Nagad'
-            }
-        };
-
-        function switchMethod(method) {
-            selectedPayMethod = method;
-            const data = config[method];
+        function navigate(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+            document.getElementById('view-' + page).classList.remove('hidden');
             
-            // Update UI Colors
-            const body = document.getElementById('payment-body');
-            body.style.backgroundColor = data.color;
-            document.getElementById('instruction-box').style.backgroundColor = 'rgba(0,0,0,0.1)';
-            document.getElementById('pay-logo').src = data.logo;
-            document.getElementById('target-number').innerText = data.number;
-            document.querySelectorAll('.method-name').forEach(el => el.innerText = data.name);
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            const activeNav = document.getElementById('nav-' + (page === 'vpn-details' ? 'vpn' : page));
+            if(activeNav) activeNav.classList.add('active');
 
-            // Update Tabs
-            ['bkash', 'nagad'].forEach(m => {
-                const btn = document.getElementById(`tab-${m}`);
-                const dot = document.getElementById(`dot-${m}`);
-                if (m === method) {
-                    btn.style.borderColor = data.color;
-                    btn.style.color = data.color;
-                    dot.style.backgroundColor = data.color;
-                    dot.style.borderColor = data.color;
-                } else {
-                    btn.style.borderColor = '#eee';
-                    btn.style.color = '#888';
-                    dot.style.backgroundColor = 'transparent';
-                    dot.style.borderColor = '#ccc';
-                }
-            });
+            if(page === 'home') renderGrid('product-grid', products.slice(0,4));
+            if(page === 'vpn') renderVpnList();
+            if(page === 'admin') renderAdmin();
         }
 
-        function copyNumber() {
-            const num = document.getElementById('target-number').innerText;
-            navigator.clipboard.writeText(num);
-            tg.showAlert("Number Copied: " + num);
-        }
-
-        function verifyPayment() {
-            tg.showConfirm("আপনি কি সঠিক ট্রানজেকশন আইডি দিয়েছেন?", (ok) => {
-                if(ok) {
-                    tg.showProgress();
-                    setTimeout(() => {
-                        tg.hideProgress();
-                        tg.showAlert("পেমেন্ট ভেরিফিকেশনের জন্য পাঠানো হয়েছে। ৫-১০ মিনিটের মধ্যে ব্যালেন্স যোগ হবে।");
-                        showStore();
-                    }, 2000);
-                }
-            });
-        }
-
-        // --- App Initialization (Mock Data) ---
-        async function init() {
-            const user = tg.initDataUnsafe.user || { first_name: "Guest", photo_url: "" };
-            document.getElementById('user-name').innerText = user.first_name;
-            if(user.photo_url) document.getElementById('user-photo').src = user.photo_url;
-
-            // Load Dummy Products
-            const products = [
-                { id: 1, name: "Premium VPN", price: 120, stock: 5, icon: "🛡️" },
-                { id: 2, name: "Netflix 1 Month", price: 350, stock: 0, icon: "🎬" },
-                { id: 3, name: "Gmail Account", price: 15, stock: 50, icon: "📧" },
-                { id: 4, name: "Canva Pro", price: 50, stock: 12, icon: "🎨" }
-            ];
-
-            const list = document.getElementById('product-list');
-            products.forEach(p => {
-                const isOut = p.stock <= 0;
-                list.innerHTML += `
-                    <div class="p-4 card flex flex-col items-center text-center shadow-sm border border-gray-50">
-                        <span class="text-3xl mb-2">${p.icon}</span>
-                        <h3 class="font-bold text-sm h-10 overflow-hidden">${p.name}</h3>
-                        <p class="text-sm text-blue-500 font-bold mb-1">৳${p.price}</p>
-                        <p class="text-[10px] mb-3 ${isOut ? 'text-red-500' : 'opacity-60'}">
-                            ${isOut ? 'Out of Stock' : 'Stock: ' + p.stock + ' pcs'}
-                        </p>
-                        <button class="w-full py-2 rounded-xl btn-primary text-xs font-bold ${isOut ? 'opacity-40' : ''}" ${isOut ? 'disabled' : ''}>
-                            Buy Now
-                        </button>
+        // --- VPN List Rendering ---
+        function renderVpnList() {
+            const container = document.getElementById('vpn-grid');
+            container.innerHTML = '';
+            products.filter(p => p.cat === 'vpn').forEach(p => {
+                container.innerHTML += `
+                    <div onclick="openVpnDetails(${p.id})" class="vpn-card p-4 flex items-center gap-4">
+                        <img src="${p.img}" class="w-16 h-16 object-contain">
+                        <div class="flex-1">
+                            <h3 class="font-bold text-slate-800">${p.name}</h3>
+                            <p class="text-xs text-slate-400 font-medium">In Stock: ${p.stock}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-blue-600 font-black">৳${p.price}</p>
+                            <span class="text-[10px] bg-blue-50 text-blue-500 px-2 py-1 rounded-lg font-bold">VIEW</span>
+                        </div>
                     </div>
                 `;
             });
+        }
+
+        function openVpnDetails(id) {
+            const p = products.find(i => i.id === id);
+            const content = document.getElementById('vpn-details-content');
+            content.innerHTML = `
+                <div class="h-64 bg-slate-50 flex items-center justify-center p-10">
+                    <img src="${p.img}" class="max-h-full">
+                </div>
+                <div class="p-6">
+                    <h2 class="text-3xl font-black text-slate-900">${p.name}</h2>
+                    <div class="flex items-center gap-2 mt-2">
+                        <span class="bg-green-100 text-green-600 px-3 py-1 rounded-full text-xs font-bold uppercase">In Stock</span>
+                        <p class="text-slate-400 font-bold text-xs">${p.stock} Units Available</p>
+                    </div>
+                    <p class="mt-6 text-slate-500 leading-relaxed font-medium">${p.desc}</p>
+                    
+                    <div class="mt-10 p-6 bg-slate-900 rounded-[30px] flex justify-between items-center text-white">
+                        <div>
+                            <p class="text-[10px] font-bold opacity-50 uppercase">Instant Access</p>
+                            <p class="text-3xl font-black">৳${p.price}</p>
+                        </div>
+                        <button onclick="requestPurchase('VPN', '${p.name}', ${p.price})" class="bg-blue-600 px-8 py-4 rounded-2xl font-black shadow-lg">ORDER NOW</button>
+                    </div>
+                </div>
+            `;
+            
+            // Similar Products
+            const similar = document.getElementById('similar-products');
+            similar.innerHTML = '';
+            products.filter(item => item.id !== id).forEach(item => {
+                similar.innerHTML += `
+                    <div onclick="openVpnDetails(${item.id})" class="min-w-[140px] bg-slate-50 p-4 rounded-2xl text-center border border-slate-100">
+                        <img src="${item.img}" class="h-12 mx-auto mb-2 object-contain">
+                        <p class="text-[10px] font-bold truncate">${item.name}</p>
+                        <p class="text-xs font-black text-blue-600">৳${item.price}</p>
+                    </div>
+                `;
+            });
+
+            navigate('vpn-details');
+        }
+
+        // --- Telegram Sending Logic ---
+        async function sendToTelegram(message) {
+            // এই ফাংশনটি মেসেজ টেলিগ্রাম চ্যানেলে পাঠাবে
+            // দ্রষ্টব্য: এখানে সরাসরি Bot Token ব্যবহার করলে সিকিউরিটি রিস্ক থাকে, রিয়েল অ্যাপে ব্যাকএন্ড ব্যবহার করা ভালো।
+            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHANNEL_ID}&text=${encodeURIComponent(message)}`;
+            try {
+                await fetch(url);
+                return true;
+            } catch(e) {
+                console.log(e);
+                return false;
+            }
+        }
+
+        function requestPurchase(cat, name, price) {
+            if(userBalance < price) {
+                tg.showAlert("Insufficient Balance! Please add money.");
+                return navigate('wallet');
+            }
+
+            tg.showConfirm(`Confirm Buying ${name} for ৳${price}?`, async (ok) => {
+                if(ok) {
+                    const user = tg.initDataUnsafe.user || { first_name: "Customer", id: "000" };
+                    const msg = `🛍️ NEW ORDER\n\n👤 User: ${user.first_name} (${user.id})\n📦 Item: ${name}\n💰 Price: ৳${price}\n📂 Cat: ${cat}\n🕒 Date: ${new Date().toLocaleString()}`;
+                    
+                    // Simulate processing
+                    tg.showProgress(true);
+                    await sendToTelegram(msg);
+                    userBalance -= price;
+                    updateUI();
+                    tg.showProgress(false);
+                    tg.showAlert("Purchase Request Sent! Our agent will contact you via Bot.");
+                }
+            });
+        }
+
+        // --- Payment Logic ---
+        function openGateway(method) {
+            document.getElementById('view-gateway').classList.remove('hidden');
+            switchMethod(method);
+        }
+
+        function closeGateway() { document.getElementById('view-gateway').classList.add('hidden'); }
+
+        function switchMethod(method) {
+            const body = document.getElementById('gateway-body');
+            const logo = document.getElementById('gateway-logo');
+            const b = document.getElementById('t-bkash');
+            const n = document.getElementById('t-nagad');
+
+            b.classList.remove('active'); n.classList.remove('active');
+
+            if(method === 'bkash') {
+                body.style.backgroundColor = "var(--bkash)";
+                logo.src = "bkash.jpg"; // আপনার দেওয়া ফাইল
+                b.classList.add('active');
+                document.getElementById('target-number').innerText = "01804749569";
+                document.getElementById('inst-1').innerText = "*247# ডায়াল করে আপনার Bkash মেনুতে যান।";
+            } else {
+                body.style.backgroundColor = "var(--nagad)";
+                logo.src = "nagad.jpg"; // আপনার দেওয়া ফাইল
+                n.classList.add('active');
+                document.getElementById('target-number').innerText = "01886313023";
+                document.getElementById('inst-1').innerText = "*247# ডায়াল করে আপনার Nagad মেনুতে যান।";
+            }
+        }
+
+        async function verifyPayment() {
+            const trx = document.getElementById('trx-id-input').value;
+            if(!trx) return tg.showAlert("Please enter Transaction ID!");
+
+            const user = tg.initDataUnsafe.user || { first_name: "Customer", id: "0" };
+            const msg = `💰 NEW DEPOSIT REQUEST\n\n👤 User: ${user.first_name}\n🆔 User ID: ${user.id}\n💳 TrxID: ${trx}\n💰 Amount: ৳40\n🕒 Time: ${new Date().toLocaleString()}`;
+            
+            tg.showProgress(true);
+            await sendToTelegram(msg);
+            tg.showProgress(false);
+            tg.showAlert("Verification Request Sent! We will update your balance within 30 minutes.");
+            closeGateway();
+        }
+
+        // --- Initial Load ---
+        function updateUI() {
+            document.getElementById('balance-top').innerText = `৳${userBalance.toFixed(2)}`;
+            document.getElementById('wallet-balance-val').innerText = userBalance.toFixed(2);
+        }
+
+        function init() {
+            const user = tg.initDataUnsafe.user || { first_name: "Customer", id: 0 };
+            document.getElementById('user-display-name').innerText = user.first_name;
+            if(user.photo_url) document.getElementById('profile-pic').src = user.photo_url;
+            if(user.id == ADMIN_ID) document.getElementById('nav-admin').classList.remove('hidden');
+            updateUI();
+            navigate('home');
         }
 
         init();
