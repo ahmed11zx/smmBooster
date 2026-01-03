@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         
         :root {
             --primary: #2563eb;
@@ -19,8 +19,9 @@
 
         body { 
             background-color: var(--bg); 
-            font-family: 'Inter', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             margin: 0; padding: 0; color: #1e293b;
+            user-select: none;
         }
 
         .page { padding: 16px; padding-bottom: 100px; }
@@ -37,30 +38,36 @@
         .nav-item.active { color: var(--primary); }
         .nav-item i { font-size: 22px; margin-bottom: 4px; }
 
-        /* VPN Slider */
-        .vpn-slider { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 10px; scroll-snap-type: x mandatory; }
-        .vpn-slider::-webkit-scrollbar { display: none; }
-        .vpn-card-home { 
-            min-width: 280px; background: #f8fafc; border-radius: 24px; padding: 20px; 
-            scroll-snap-align: start; border: 1px solid #f1f5f9;
+        /* Banner Slider */
+        .banner-slider { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; border-radius: 20px; }
+        .banner-slider::-webkit-scrollbar { display: none; }
+        .banner-item { min-width: 100%; scroll-snap-align: start; border-radius: 20px; height: 160px; object-fit: cover; }
+
+        /* Product Cards */
+        .prod-card { background: #f8fafc; border-radius: 24px; padding: 16px; border: 1px solid #f1f5f9; }
+        .buy-btn-premium {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white; padding: 10px; border-radius: 12px; font-weight: 800; font-size: 12px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
         }
 
-        /* Detail Page Overlay */
-        #view-vpn-details { position: fixed; inset: 0; background: white; z-index: 1000; overflow-y: auto; }
-
-        /* Admin Styles */
-        .admin-input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 10px; font-size: 14px; outline: none; }
-        .admin-btn { width: 100%; padding: 12px; border-radius: 12px; background: #1e293b; color: white; font-weight: bold; margin-bottom: 20px; }
+        /* Payment Gateway */
+        #view-gateway { position: fixed; inset: 0; background: white; z-index: 2000; overflow-y: auto; }
+        .gateway-header { height: 60px; display: flex; align-items: center; padding: 0 20px; }
+        .gateway-content { border-radius: 40px 40px 0 0; padding: 30px 20px; min-height: 80vh; }
+        
+        .trx-box { background: white; border-radius: 15px; padding: 15px; text-align: center; margin-bottom: 20px; }
+        .trx-input { width: 100%; border: none; font-size: 18px; font-weight: 700; text-align: center; outline: none; }
     </style>
 </head>
 <body>
 
     <!-- Header -->
-    <header id="main-header" class="p-4 flex justify-between items-center bg-white border-b sticky top-0 z-50">
+    <header id="main-header" class="p-4 flex justify-between items-center bg-white">
         <div class="flex items-center gap-3">
             <img id="profile-pic" src="https://ui-avatars.com/api/?name=U" class="w-10 h-10 rounded-full border">
             <div>
-                <p class="text-[10px] font-bold text-slate-400 uppercase">Premium Shop</p>
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Member</p>
                 <h1 id="user-display-name" class="font-bold text-slate-800 text-sm">Hello!</h1>
             </div>
         </div>
@@ -72,399 +79,312 @@
     <main>
         <!-- Home View -->
         <div id="view-home" class="page">
-            <h2 class="text-lg font-extrabold mb-4 flex items-center gap-2">
-                <i class="fas fa-bolt text-yellow-500"></i> Premium VPNs
-            </h2>
-            <!-- VPN Slider -->
-            <div id="vpn-slider-list" class="vpn-slider mb-8">
-                <!-- Loaded via JS -->
+            <!-- Sliding Banner -->
+            <div id="banner-list" class="banner-slider mb-6">
+                <!-- Banners will load here -->
             </div>
 
-            <h2 class="text-lg font-extrabold mb-4">Other Services</h2>
-            <div id="other-products-grid" class="grid grid-cols-2 gap-4">
-                <!-- Loaded via JS -->
+            <h2 class="text-lg font-extrabold mb-4">Premium VPN & Items</h2>
+            <div id="product-list" class="grid grid-cols-2 gap-4">
+                <!-- Products will load here -->
             </div>
         </div>
 
-        <!-- VPN Detail View -->
-        <div id="view-vpn-details" class="hidden">
-            <div class="relative">
-                <button onclick="closeVpnDetails()" class="absolute top-6 left-6 w-10 h-10 bg-white/80 backdrop-blur rounded-full shadow-lg flex items-center justify-center z-10">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <div id="vpn-detail-body"></div>
-            </div>
-            <div class="p-6">
-                <h3 class="font-bold text-slate-800 mb-4">Similar Products</h3>
-                <div id="similar-list" class="flex gap-4 overflow-x-auto vpn-slider"></div>
-            </div>
-        </div>
-
-        <!-- Email View -->
-        <div id="view-email" class="page hidden">
-            <div class="bg-slate-50 rounded-3xl p-6 border">
-                <h2 class="text-xl font-black mb-6">Select Account Type</h2>
-                <div class="space-y-4">
-                    <select id="email-select" onchange="syncEmail()" class="w-full p-4 bg-white border rounded-2xl font-bold outline-none ring-2 ring-transparent focus:ring-blue-500">
-                        <!-- Loaded from products array -->
-                    </select>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-white p-4 rounded-2xl border text-center">
-                            <p class="text-[10px] font-bold opacity-40">PRICE</p>
-                            <p class="text-lg font-black text-blue-600">৳<span id="em-price">0</span></p>
-                        </div>
-                        <div class="bg-white p-4 rounded-2xl border text-center">
-                            <p class="text-[10px] font-bold opacity-40">STOCK</p>
-                            <p class="text-lg font-black"><span id="em-stock">0</span></p>
-                        </div>
-                    </div>
-                    <label class="text-xs font-bold opacity-50 ml-1">Quantity</label>
-                    <input type="number" id="em-qty" value="1" min="1" oninput="calcTotal()" class="w-full p-4 bg-white border rounded-2xl font-black text-center text-xl">
-                    <button onclick="handlePurchase('email')" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-200">BUY NOW (৳<span id="em-total">0</span>)</button>
-                </div>
+        <!-- Inventory View -->
+        <div id="view-inventory" class="page hidden">
+            <h2 class="text-xl font-black mb-6">My Inventory</h2>
+            <p class="text-[10px] text-red-500 font-bold mb-4 uppercase">* Items auto-remove after 7 days</p>
+            <div id="inventory-list" class="space-y-4">
+                <!-- User Items will load here -->
             </div>
         </div>
 
         <!-- Wallet View -->
         <div id="view-wallet" class="page hidden">
-            <div class="bg-slate-900 rounded-[35px] p-8 text-white mb-8 relative overflow-hidden">
-                <div class="relative z-10">
-                    <p class="text-xs font-bold opacity-50 uppercase tracking-widest">Available Balance</p>
-                    <h2 class="text-4xl font-black mt-2">৳<span id="wallet-balance-val">0.00</span></h2>
-                </div>
-                <div class="absolute -right-4 -bottom-4 opacity-10 text-9xl rotate-12"><i class="fas fa-wallet"></i></div>
+            <div class="bg-slate-900 rounded-[35px] p-8 text-white mb-8">
+                <p class="text-xs font-bold opacity-50 uppercase tracking-widest">Available Balance</p>
+                <h2 class="text-4xl font-black mt-2">৳<span id="wallet-balance-val">0.00</span></h2>
             </div>
-
             <h3 class="font-extrabold mb-4">Top Up Wallet</h3>
             <div class="grid grid-cols-1 gap-3">
-                <button onclick="openGateway('bkash')" class="bg-pink-50 border border-pink-100 p-5 rounded-3xl flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <img src="bkash.jpg" class="h-8 w-8 rounded-full border bg-white" onerror="this.src='https://searchvectorlogo.com/wp-content/uploads/2020/02/bkash-logo-vector.png'">
-                        <span class="font-bold text-pink-600">bKash Payment</span>
-                    </div>
-                    <i class="fas fa-chevron-right text-pink-200"></i>
+                <button onclick="openGateway('bkash')" class="bg-slate-50 border p-5 rounded-3xl flex items-center justify-between">
+                    <span class="font-bold">bKash Payment</span>
+                    <i class="fas fa-chevron-right opacity-30"></i>
                 </button>
-                <button onclick="openGateway('nagad')" class="bg-red-50 border border-red-100 p-5 rounded-3xl flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <img src="nagad.jpg" class="h-8 w-8 rounded-full border bg-white" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Nagad_Logo.svg/1200px-Nagad_Logo.svg.png'">
-                        <span class="font-bold text-red-600">Nagad Payment</span>
-                    </div>
-                    <i class="fas fa-chevron-right text-red-200"></i>
+                <button onclick="openGateway('nagad')" class="bg-slate-50 border p-5 rounded-3xl flex items-center justify-between">
+                    <span class="font-bold">Nagad Payment</span>
+                    <i class="fas fa-chevron-right opacity-30"></i>
                 </button>
             </div>
         </div>
 
         <!-- Admin View -->
         <div id="view-admin" class="page hidden">
-            <h2 class="text-xl font-black text-red-600 mb-6">Admin Control Panel</h2>
+            <h2 class="text-xl font-black text-red-600 mb-6">Admin Panel</h2>
             
-            <!-- Add VPN Section -->
-            <div class="bg-white p-5 rounded-2xl border mb-6">
-                <h3 class="font-bold mb-4 text-sm text-slate-500 uppercase">Add New VPN</h3>
-                <input type="text" id="adm-vpn-name" placeholder="VPN Name" class="admin-input">
-                <input type="number" id="adm-vpn-price" placeholder="Price" class="admin-input">
-                <input type="number" id="adm-vpn-stock" placeholder="Stock" class="admin-input">
-                <input type="text" id="adm-vpn-img" placeholder="Image URL" class="admin-input">
-                <textarea id="adm-vpn-desc" placeholder="Product Details..." class="admin-input h-24"></textarea>
-                <button onclick="adminAddVpn()" class="admin-btn">ADD VPN PRODUCT</button>
+            <!-- Banner Add -->
+            <div class="bg-slate-50 p-4 rounded-2xl mb-6 border">
+                <h3 class="font-bold text-sm mb-3">Add Banner (URL)</h3>
+                <input type="text" id="adm-banner-url" placeholder="Image URL" class="w-full p-3 rounded-xl border mb-2 text-sm">
+                <button onclick="addBanner()" class="w-full bg-slate-800 text-white p-3 rounded-xl font-bold text-sm">ADD BANNER</button>
             </div>
 
-            <!-- Manage Stock Section -->
-            <div class="bg-white p-5 rounded-2xl border">
-                <h3 class="font-bold mb-4 text-sm text-slate-500 uppercase">Update Email Stock</h3>
-                <select id="adm-stock-type" class="admin-input">
-                    <option value="gmail">Gmail Premium</option>
-                    <option value="edu">Edu Mail</option>
-                    <option value="hotmail">Hotmail</option>
-                    <option value="outlook">Outlook</option>
-                </select>
-                <input type="number" id="adm-stock-val" placeholder="New Stock Quantity" class="admin-input">
-                <button onclick="adminUpdateStock()" class="admin-btn bg-blue-600">UPDATE STOCK</button>
+            <!-- Item Add with Stock -->
+            <div class="bg-slate-50 p-4 rounded-2xl mb-6 border">
+                <h3 class="font-bold text-sm mb-3">Add New Item</h3>
+                <input type="text" id="adm-item-name" placeholder="Item Name" class="w-full p-3 rounded-xl border mb-2 text-sm">
+                <input type="number" id="adm-item-price" placeholder="Price" class="w-full p-3 rounded-xl border mb-2 text-sm">
+                <input type="text" id="adm-item-img" placeholder="Item Image URL" class="w-full p-3 rounded-xl border mb-2 text-sm">
+                <textarea id="adm-item-stock" placeholder="Enter stock items (One per line: email:pass or code)" class="w-full p-3 rounded-xl border mb-2 text-sm h-24"></textarea>
+                <button onclick="addItem()" class="w-full bg-blue-600 text-white p-3 rounded-xl font-bold text-sm">SAVE ITEM</button>
             </div>
         </div>
 
         <!-- Payment Gateway Overlay -->
-        <div id="view-gateway" class="hidden fixed inset-0 z-[2000] bg-white overflow-y-auto">
-            <div class="p-6 text-center">
-                <button onclick="closeGateway()" class="absolute left-6 top-8 text-slate-400"><i class="fas fa-arrow-left text-xl"></i></button>
-                <img id="gateway-logo" src="" class="h-10 mx-auto mt-2">
-                
-                <div class="mx-4 mt-12 p-6 bg-slate-50 rounded-[35px] border-2 border-dashed border-slate-200 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <img src="apklogo.jpg" class="w-10 h-10 rounded-full border" onerror="this.src='https://cdn-icons-png.flaticon.com/512/217/217853.png'">
-                        <div class="text-left">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase">Payment Amount</p>
-                            <p class="text-2xl font-black">৳40</p>
-                        </div>
+        <div id="view-gateway" class="hidden">
+            <div class="gateway-header">
+                <button onclick="closeGateway()" class="text-slate-400"><i class="fas fa-chevron-left"></i></button>
+                <div class="flex-1 text-center font-bold text-slate-800">Payment</div>
+            </div>
+
+            <div class="p-4 flex flex-col items-center">
+                <div class="flex bg-slate-100 p-1 rounded-full mb-8">
+                    <div id="gt-bkash" class="px-6 py-2 rounded-full font-bold text-sm">Bkash</div>
+                    <div id="gt-nagad" class="px-6 py-2 rounded-full font-bold text-sm">Nagad</div>
+                </div>
+
+                <div class="w-full bg-white border rounded-[30px] p-6 shadow-sm flex items-center gap-4 mb-8">
+                    <img src="logo.jpg" class="w-12 h-12 rounded-full border object-cover" onerror="this.src='https://cdn-icons-png.flaticon.com/512/217/217853.png'">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">Payment Amount</p>
+                        <p class="text-2xl font-black">৳40</p>
                     </div>
                 </div>
 
-                <div id="gateway-body" class="mt-8 rounded-[40px] p-8 text-white min-height-[60vh]">
-                    <h3 class="font-bold text-lg mb-6">ট্রানজেকশন আইডি দিন</h3>
-                    <input type="text" id="trx-input" placeholder="TRX ID" class="w-full p-5 rounded-2xl text-slate-800 text-center font-bold text-xl outline-none">
-                    
-                    <div class="mt-10 text-left space-y-4">
-                        <p id="inst-1" class="text-sm font-medium"></p>
-                        <p class="text-sm font-medium">২. "Send Money" -এ ক্লিক করুন।</p>
-                        <div class="bg-black/20 p-4 rounded-2xl flex justify-between items-center">
-                            <span id="target-num" class="text-xl font-black tracking-tighter"></span>
-                            <button onclick="copyNum()" class="bg-white/20 px-4 py-2 rounded-xl text-xs font-bold">COPY</button>
-                        </div>
+                <div id="gateway-body" class="w-full rounded-[40px] p-8 text-white min-h-[500px]">
+                    <h3 class="text-center font-bold text-lg mb-6">ট্রানজেকশন আইডি দিন</h3>
+                    <div class="trx-box">
+                        <input type="text" placeholder="ট্রানজেকশন আইডি" class="trx-input" id="trx-id">
                     </div>
-                    <button onclick="verifyTrx()" class="w-full bg-white text-slate-900 py-5 rounded-[25px] font-black text-xl mt-12 shadow-2xl">VERIFY</button>
+                    
+                    <div class="space-y-4 text-sm font-medium">
+                        <div class="flex gap-3"><span class="w-2 h-2 rounded-full bg-white mt-1.5 shrink-0"></span> <p id="inst-1"></p></div>
+                        <div class="flex gap-3"><span class="w-2 h-2 rounded-full bg-white mt-1.5 shrink-0"></span> <p>"Send Money" -এ ক্লিক করুন।</p></div>
+                        <div class="flex gap-3"><span class="w-2 h-2 rounded-full bg-white mt-1.5 shrink-0"></span> <p>প্রাপক নম্বর হিসেবে এই নম্বরটি লিখুনঃ</p></div>
+                        
+                        <div class="bg-black/20 p-4 rounded-2xl flex justify-between items-center">
+                            <span id="target-num" class="text-xl font-black tracking-tighter">01804749569</span>
+                            <button onclick="copyNum()" class="opacity-50 hover:opacity-100"><i class="far fa-copy"></i></button>
+                        </div>
+                        <div class="flex gap-3"><span class="w-2 h-2 rounded-full bg-white mt-1.5 shrink-0"></span> <p>টাকার পরিমাণঃ 40</p></div>
+                    </div>
+
+                    <button onclick="verifyPayment()" class="w-full bg-white text-slate-900 py-4 rounded-[20px] font-black text-lg mt-10 shadow-xl">VERIFY</button>
                 </div>
             </div>
         </div>
     </main>
 
     <!-- Navigation -->
-    <nav class="bottom-nav" id="main-nav">
+    <nav class="bottom-nav">
         <button onclick="navigate('home')" class="nav-item active" id="nav-home"><i class="fas fa-house"></i><span>Home</span></button>
-        <button onclick="navigate('email')" class="nav-item" id="nav-email"><i class="fas fa-at"></i><span>Emails</span></button>
+        <button onclick="navigate('inventory')" class="nav-item" id="nav-inventory"><i class="fas fa-box-open"></i><span>Inventory</span></button>
         <button onclick="navigate('wallet')" class="nav-item" id="nav-wallet"><i class="fas fa-wallet"></i><span>Wallet</span></button>
-        <button onclick="navigate('admin')" class="nav-item hidden" id="nav-admin"><i class="fas fa-user-gear text-red-500"></i><span>Admin</span></button>
+        <button onclick="navigate('admin')" class="nav-item hidden" id="nav-admin"><i class="fas fa-user-shield text-red-500"></i><span>Admin</span></button>
     </nav>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        const ADMIN_ID = 6703675335;
-        const CHANNEL_ID = "@psisjdn";
-        const BOT_TOKEN = "YOUR_BOT_TOKEN";
-
-        let userBalance = 500.00;
+        // --- Data Structure (Using LocalStorage for Demo) ---
+        let balance = parseFloat(localStorage.getItem('balance')) || 500.00;
+        let products = JSON.parse(localStorage.getItem('products')) || [];
+        let banners = JSON.parse(localStorage.getItem('banners')) || ["https://img.freepik.com/free-vector/modern-special-offer-sale-banner-template_1017-23058.jpg"];
+        let inventory = JSON.parse(localStorage.getItem('inventory')) || [];
         
-        // Product State
-        let products = [
-            { id: 1, name: "NordVPN Premium", price: 250, stock: 15, cat: 'vpn', img: 'https://cdn.iconscout.com/icon/free/png-256/free-nordvpn-3521614-2945037.png', desc: 'Secure encryption with high-speed 5000+ servers.' },
-            { id: 2, name: "ExpressVPN Premium", price: 350, stock: 8, cat: 'vpn', img: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/ExpressVPN_logo.svg/1200px-ExpressVPN_logo.svg.png', desc: 'Fastest servers for streaming and gaming worldwide.' },
-            { id: 101, name: "Gmail Premium", price: 20, stock: 100, cat: 'email', type: 'gmail' },
-            { id: 102, name: "Edu Mail", price: 150, stock: 45, cat: 'email', type: 'edu' },
-            { id: 103, name: "Hotmail Fresh", price: 15, stock: 200, cat: 'email', type: 'hotmail' },
-            { id: 104, name: "Outlook Account", price: 18, stock: 150, cat: 'email', type: 'outlook' }
-        ];
+        const ADMIN_ID = 6703675335;
 
         function navigate(page) {
             document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-            const target = document.getElementById('view-' + page);
-            if(target) target.classList.remove('hidden');
-
+            document.getElementById('view-' + page).classList.remove('hidden');
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            const nav = document.getElementById('nav-' + page);
-            if(nav) nav.classList.add('active');
+            document.getElementById('nav-' + page).classList.add('active');
 
             if(page === 'home') renderHome();
-            if(page === 'email') loadEmailOptions();
+            if(page === 'inventory') renderInventory();
         }
 
+        // --- Home Logic ---
         function renderHome() {
-            const vpnList = document.getElementById('vpn-slider-list');
-            const otherGrid = document.getElementById('other-products-grid');
-            vpnList.innerHTML = '';
-            otherGrid.innerHTML = '';
+            // Banners
+            const bList = document.getElementById('banner-list');
+            bList.innerHTML = banners.map(url => `<img src="${url}" class="banner-item">`).join('');
 
-            products.forEach(p => {
-                if(p.cat === 'vpn') {
-                    vpnList.innerHTML += `
-                        <div onclick="openVpnDetails(${p.id})" class="vpn-card-home">
-                            <img src="${p.img}" class="h-12 mb-4 object-contain">
-                            <h3 class="font-bold text-slate-800">${p.name}</h3>
-                            <p class="text-xs text-slate-400 mt-1 mb-4 h-8 overflow-hidden">${p.desc}</p>
-                            <div class="flex justify-between items-center">
-                                <span class="font-black text-blue-600">৳${p.price}</span>
-                                <span class="text-[10px] font-bold bg-white px-3 py-1 rounded-full border">STOCK: ${p.stock}</span>
-                            </div>
-                        </div>
-                    `;
-                } else if(p.cat === 'email') {
-                    otherGrid.innerHTML += `
-                        <div class="bg-slate-50 border p-4 rounded-2xl text-center">
-                            <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center mx-auto mb-2 text-xl">📧</div>
-                            <h3 class="font-bold text-xs mb-1 h-8">${p.name}</h3>
-                            <p class="text-blue-600 font-black mb-3">৳${p.price}</p>
-                            <button onclick="navigate('email')" class="w-full py-2 bg-white border rounded-xl text-[10px] font-bold">ORDER NOW</button>
-                        </div>
-                    `;
-                }
-            });
+            // Products
+            const pList = document.getElementById('product-list');
+            pList.innerHTML = products.map((p, idx) => `
+                <div class="prod-card text-center">
+                    <img src="${p.img}" class="h-16 mx-auto mb-3 object-contain">
+                    <h3 class="font-bold text-xs mb-1 h-8">${p.name}</h3>
+                    <p class="text-[9px] font-black text-slate-400 mb-3">STOCK: ${p.stock.length}</p>
+                    <button onclick="buyItem(${idx})" class="w-full buy-btn-premium">
+                        BUY ৳${p.price}
+                    </button>
+                </div>
+            `).join('');
         }
 
-        // --- VPN Details Logic ---
-        function openVpnDetails(id) {
-            const p = products.find(i => i.id === id);
-            const detailBody = document.getElementById('vpn-detail-body');
-            detailBody.innerHTML = `
-                <div class="h-64 bg-slate-50 flex items-center justify-center p-12">
-                    <img src="${p.img}" class="max-h-full">
-                </div>
-                <div class="p-8">
-                    <h2 class="text-3xl font-black">${p.name}</h2>
-                    <p class="text-green-500 font-bold text-xs mt-2 uppercase tracking-widest">In Stock: ${p.stock}</p>
-                    <p class="mt-6 text-slate-500 font-medium leading-relaxed">${p.desc}</p>
-                    <div class="mt-10 bg-slate-900 rounded-[30px] p-6 flex justify-between items-center text-white">
-                        <div>
-                            <p class="text-[10px] font-bold opacity-40">INSTANT DELIVERY</p>
-                            <p class="text-3xl font-black">৳${p.price}</p>
-                        </div>
-                        <button onclick="buyVpn(${p.id})" class="bg-blue-600 px-8 py-4 rounded-2xl font-black shadow-lg">BUY NOW</button>
-                    </div>
-                </div>
-            `;
+        // --- Buying Logic ---
+        function buyItem(idx) {
+            const item = products[idx];
+            
+            if(balance < item.price) return tg.showAlert("Insufficient balance!");
+            if(item.stock.length === 0) return tg.showAlert("Out of stock! Wait for restock.");
 
-            // Similar Products
-            const similar = document.getElementById('similar-list');
-            similar.innerHTML = '';
-            products.filter(item => item.cat === 'vpn' && item.id !== id).forEach(item => {
-                similar.innerHTML += `
-                    <div onclick="openVpnDetails(${item.id})" class="min-w-[150px] bg-slate-50 p-4 rounded-2xl border text-center">
-                        <img src="${item.img}" class="h-10 mx-auto mb-2">
-                        <p class="text-[10px] font-bold truncate">${item.name}</p>
-                        <p class="text-xs font-black text-blue-600">৳${item.price}</p>
-                    </div>
-                `;
-            });
-
-            document.getElementById('view-vpn-details').classList.remove('hidden');
-        }
-
-        function closeVpnDetails() { document.getElementById('view-vpn-details').classList.add('hidden'); }
-
-        async function buyVpn(id) {
-            const p = products.find(i => i.id === id);
-            if(p.stock <= 0) return tg.showAlert("Out of stock!");
-            if(userBalance < p.price) return tg.showAlert("Low balance! Please add money.");
-
-            tg.showConfirm(`Confirm buying ${p.name}?`, async (ok) => {
+            tg.showConfirm(`Buy ${item.name} for ৳${item.price}?`, (ok) => {
                 if(ok) {
-                    p.stock--; // Stock Decrease
-                    userBalance -= p.price;
+                    balance -= item.price;
+                    const data = item.stock.shift(); // Remove from stock
+                    
+                    const newItem = {
+                        name: item.name,
+                        data: data,
+                        buyDate: Date.now(),
+                        expiryDate: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 days
+                    };
+
+                    inventory.unshift(newItem);
+                    saveData();
                     updateUI();
                     renderHome();
-                    closeVpnDetails();
-                    tg.showAlert("Purchase Request Sent!");
-                    await sendTele(`🛍️ VPN ORDER\nUser: ${tg.initDataUnsafe.user?.first_name}\nItem: ${p.name}\nPrice: ৳${p.price}`);
+                    tg.showAlert("Success! Item added to your Inventory.");
                 }
             });
         }
 
-        // --- Admin Controls ---
-        function adminAddVpn() {
-            const name = document.getElementById('adm-vpn-name').value;
-            const price = parseFloat(document.getElementById('adm-vpn-price').value);
-            const stock = parseInt(document.getElementById('adm-vpn-stock').value);
-            const img = document.getElementById('adm-vpn-img').value;
-            const desc = document.getElementById('adm-vpn-desc').value;
+        // --- Inventory Logic ---
+        function renderInventory() {
+            const iList = document.getElementById('inventory-list');
+            const now = Date.now();
+            
+            // Auto Clean: Filter out items older than 7 days
+            inventory = inventory.filter(item => item.expiryDate > now);
+            saveData();
 
-            if(!name || !price) return tg.showAlert("Fill all fields!");
-
-            products.push({ id: Date.now(), name, price, stock, cat: 'vpn', img, desc });
-            tg.showAlert("VPN Added Successfully!");
-            renderHome();
-        }
-
-        function adminUpdateStock() {
-            const type = document.getElementById('adm-stock-type').value;
-            const newVal = parseInt(document.getElementById('adm-stock-val').value);
-            const item = products.find(p => p.type === type);
-            if(item) {
-                item.stock = newVal;
-                tg.showAlert("Stock Updated!");
+            if(inventory.length === 0) {
+                iList.innerHTML = `<div class="p-10 text-center opacity-30 font-bold">Empty Inventory</div>`;
+                return;
             }
+
+            iList.innerHTML = inventory.map(item => `
+                <div class="bg-white border rounded-2xl p-4 shadow-sm">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-black text-sm">${item.name}</span>
+                        <span class="text-[10px] text-green-500 font-bold bg-green-50 px-2 py-1 rounded-lg">ACTIVE</span>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border-dashed border border-slate-200 text-xs font-mono break-all mb-2">
+                        ${item.data}
+                    </div>
+                    <div class="flex justify-between text-[10px] opacity-40 font-bold uppercase">
+                        <span>Bought: ${new Date(item.buyDate).toLocaleDateString()}</span>
+                        <span class="text-red-400">Expires in: 7 Days</span>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        // --- Email Purchasing ---
-        function loadEmailOptions() {
-            const select = document.getElementById('email-select');
-            select.innerHTML = products.filter(p => p.cat === 'email').map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-            syncEmail();
+        // --- Admin Logic ---
+        function addBanner() {
+            const url = document.getElementById('adm-banner-url').value;
+            if(!url) return;
+            banners.push(url);
+            saveData();
+            tg.showAlert("Banner Added!");
+            document.getElementById('adm-banner-url').value = "";
         }
 
-        function syncEmail() {
-            const id = document.getElementById('email-select').value;
-            const item = products.find(p => p.id == id);
-            document.getElementById('em-price').innerText = item.price;
-            document.getElementById('em-stock').innerText = item.stock;
-            calcTotal();
-        }
+        function addItem() {
+            const name = document.getElementById('adm-item-name').value;
+            const price = parseFloat(document.getElementById('adm-item-price').value);
+            const img = document.getElementById('adm-item-img').value;
+            const stockInput = document.getElementById('adm-item-stock').value;
 
-        function calcTotal() {
-            const p = parseFloat(document.getElementById('em-price').innerText);
-            const q = parseInt(document.getElementById('em-qty').value) || 0;
-            document.getElementById('em-total').innerText = (p * q);
-        }
+            if(!name || !price || !stockInput) return tg.showAlert("Fill all fields!");
 
-        function handlePurchase(type) {
-            const id = document.getElementById('email-select').value;
-            const item = products.find(p => p.id == id);
-            const qty = parseInt(document.getElementById('em-qty').value);
-            const cost = item.price * qty;
+            const stockArray = stockInput.split('\n').filter(line => line.trim() !== "");
 
-            if(item.stock < qty) return tg.showAlert("Not enough stock!");
-            if(userBalance < cost) return tg.showAlert("Low balance!");
-
-            tg.showConfirm(`Buy ${qty}x ${item.name} for ৳${cost}?`, async (ok) => {
-                if(ok) {
-                    item.stock -= qty; // Stock Decrease
-                    userBalance -= cost;
-                    updateUI();
-                    tg.showAlert("Order Placed!");
-                    await sendTele(`📧 EMAIL ORDER\nUser: ${tg.initDataUnsafe.user?.first_name}\nItem: ${item.name}\nQty: ${qty}\nTotal: ৳${cost}`);
-                    navigate('home');
-                }
+            products.push({
+                name, price, img, stock: stockArray
             });
+
+            saveData();
+            tg.showAlert("Item Saved with Stock!");
+            
+            // Clear inputs
+            document.getElementById('adm-item-name').value = "";
+            document.getElementById('adm-item-price').value = "";
+            document.getElementById('adm-item-img').value = "";
+            document.getElementById('adm-item-stock').value = "";
         }
 
-        // --- Wallet/Payment Logic ---
+        // --- Gateway Logic ---
         function openGateway(method) {
-            const body = document.getElementById('gateway-body');
-            const logo = document.getElementById('gateway-logo');
             document.getElementById('view-gateway').classList.remove('hidden');
+            const body = document.getElementById('gateway-body');
+            const bBtn = document.getElementById('gt-bkash');
+            const nBtn = document.getElementById('gt-nagad');
+            const target = document.getElementById('target-num');
+            const inst = document.getElementById('inst-1');
 
             if(method === 'bkash') {
                 body.style.backgroundColor = "var(--bkash)";
-                logo.src = "bkash.jpg";
-                document.getElementById('inst-1').innerText = "১. *২৪৭# ডায়াল করে বিকাশ মেনুতে যান।";
-                document.getElementById('target-num').innerText = "01804749569";
+                bBtn.className = "px-6 py-2 rounded-full font-bold text-sm bg-white text-pink-600 shadow-sm";
+                nBtn.className = "px-6 py-2 rounded-full font-bold text-sm text-slate-400";
+                target.innerText = "01804749569";
+                inst.innerText = "*247# ডায়াল করে আপনার Bkash মোবাইল মেনুতে যান অথবা অ্যাপে যান।";
             } else {
                 body.style.backgroundColor = "var(--nagad)";
-                logo.src = "nagad.jpg";
-                document.getElementById('inst-1').innerText = "১. *১৬৭# ডায়াল করে নগদ মেনুতে যান।";
-                document.getElementById('target-num').innerText = "01886313023";
+                nBtn.className = "px-6 py-2 rounded-full font-bold text-sm bg-white text-red-600 shadow-sm";
+                bBtn.className = "px-6 py-2 rounded-full font-bold text-sm text-slate-400";
+                target.innerText = "01886313023";
+                inst.innerText = "*247# ডায়াল করে আপনার Nagad মোবাইল মেনুতে যান অথবা অ্যাপে যান।";
             }
         }
 
         function closeGateway() { document.getElementById('view-gateway').classList.add('hidden'); }
 
-        async function verifyTrx() {
-            const trx = document.getElementById('trx-input').value;
-            if(!trx) return tg.showAlert("Enter Transaction ID!");
-            await sendTele(`💰 DEPOSIT REQUEST\nUser: ${tg.initDataUnsafe.user?.first_name}\nTrxID: ${trx}\nAmount: ৳40`);
-            tg.showAlert("Request Submitted! Wait for verification.");
+        function verifyPayment() {
+            const trx = document.getElementById('trx-id').value;
+            if(!trx) return tg.showAlert("Please enter TRX ID!");
+            tg.showAlert("Verification request sent! Wait 10-30 minutes.");
             closeGateway();
-        }
-
-        // --- Utils ---
-        async function sendTele(msg) {
-            const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHANNEL_ID}&text=${encodeURIComponent(msg)}`;
-            try { await fetch(url); } catch(e) {}
-        }
-
-        function updateUI() {
-            document.getElementById('balance-top').innerText = `৳${userBalance.toFixed(2)}`;
-            document.getElementById('wallet-balance-val').innerText = userBalance.toFixed(2);
         }
 
         function copyNum() {
             const num = document.getElementById('target-num').innerText;
             navigator.clipboard.writeText(num);
-            tg.showAlert("Number Copied!");
+            tg.showAlert("Number copied!");
+        }
+
+        // --- Global Helpers ---
+        function saveData() {
+            localStorage.setItem('balance', balance);
+            localStorage.setItem('products', JSON.stringify(products));
+            localStorage.setItem('banners', JSON.stringify(banners));
+            localStorage.setItem('inventory', JSON.stringify(inventory));
+        }
+
+        function updateUI() {
+            document.getElementById('balance-top').innerText = `৳${balance.toFixed(2)}`;
+            document.getElementById('wallet-balance-val').innerText = balance.toFixed(2);
         }
 
         function init() {
-            const user = tg.initDataUnsafe.user || { first_name: "User", id: 0 };
+            const user = tg.initDataUnsafe.user || { id: 0, first_name: "Customer" };
             document.getElementById('user-display-name').innerText = `Hi, ${user.first_name}!`;
             if(user.id == ADMIN_ID) document.getElementById('nav-admin').classList.remove('hidden');
+            
             updateUI();
             navigate('home');
         }
